@@ -6,7 +6,7 @@ async function handleIncomingMessage(senderId, messageText) {
   const prompt = `User: ${messageText}\nChatbot: `;
   const response = await chatGPTController.sendQueryToChatGPT(prompt);
   if (response) {
-    console.log(`Response: ${response}`);
+    console.log(`Response to message: ${response}`);
     await sendTextMessage(senderId, response);
   } else {
     console.log('No response from ChatGPT.');
@@ -22,6 +22,7 @@ async function sendTextMessage(senderId, messageText) {
     });
   } catch (error) {
     console.error('Error sending message:', error.message);
+    console.error('Error response data:', error.response.data);
   }
 }
 
@@ -65,6 +66,7 @@ async function handleWebhook(req, res) {
 
           if (event.value.item === 'comment' && event.value.verb === 'add') {
             const responseText = await chatGPTController.sendQueryToChatGPT(messageText);
+            console.log(`Response to comment: ${responseText}`);
             await replyToComment(postId, comment, responseText);
           }
         }

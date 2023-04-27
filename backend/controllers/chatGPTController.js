@@ -1,31 +1,39 @@
-const axios = require('axios');
+const { Configuration, OpenAIApi } = require("openai");
 const config = require('../config');
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
-const chatGPTAPIEndpoint = 'https://api.openai.com/v1/engines/davinci-codex/completions';
-
-async function sendQueryToChatGPT(prompt) {
+async function sendQueryToChatGPT(inputText) {
+  const businessInfo = JSON.stringify(config.businessInfo);
+  const noProfanityInstruction = 'Avoid using profanity in the response.';
   try {
-    const response = await axios.post(
-      chatGPTAPIEndpoint,
-      {
-        prompt: prompt,
-        max_tokens: 150,
-        n: 1,
-        stop: null,
-        temperature: 0.8,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.chatGPTAPIKey}`
+    const completion = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "assistant",
+          content: `You are Virtual Assistant of ${config.businessInfo.name}. You are here to help answer questions and provide assistance.`
+        },
+        {
+          role: "assistant",
+          content: `Here is the business information: ${businessInfo}`
+        },
+        {
+          role: "assistant",
+          content: noProfanityInstruction
+        },
+        {
+          role: "user",
+          content: inputText
         }
-      }
-    );
-
-    const answer = response.data.choices[0].text.trim();
-    return answer;
+      ],
+  });
+  const answer = completion.data.choices[0].message.content;
+  return answer;
   } catch (error) {
-    console.error('Error querying ChatGPT:', error.message);
+    console.error('Error querying ChatGPT:', error.response.data.error.message);
     return null;
   }
 }
